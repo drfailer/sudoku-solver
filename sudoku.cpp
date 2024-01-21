@@ -8,6 +8,7 @@
 /*                                load & save                                 */
 /******************************************************************************/
 
+/* load a grid from a file */
 void loadFromFile(int grid[9][9], const std::string& fileName) {
     std::ifstream file(fileName);
 
@@ -23,6 +24,7 @@ void loadFromFile(int grid[9][9], const std::string& fileName) {
     }
 }
 
+/* save a grid to a file */
 void saveToFile(int grid[9][9], const std::string& fileName) {
     std::ofstream file(fileName);
 
@@ -39,6 +41,7 @@ void saveToFile(int grid[9][9], const std::string& fileName) {
 /*                                   print                                    */
 /******************************************************************************/
 
+/* print a grid on stdout */
 void print(int grid[9][9]) {
     for (int i = 0; i < 9; ++i) {
         for (int j =0; j < 9; ++j) {
@@ -52,6 +55,7 @@ void print(int grid[9][9]) {
 /*                                   check                                    */
 /******************************************************************************/
 
+/* Check if a grid is valid */
 bool check(int grid[9][9]) {
     for (int i = 0; i < 9; ++i) {
         // check lines and columns
@@ -61,12 +65,6 @@ bool check(int grid[9][9]) {
                 bool columnError = (k != i && grid[i][j] == grid[k][j]);
 
                 if (lineError && columnError) {
-                    if (lineError) {
-                        std::cout << "lineError: " << i << ", " << j << ", " << k << std::endl;
-                    }
-                    if (columnError) {
-                        std::cout << "columnError: " << i << ", " << j << ", " << k << std::endl;
-                    }
                     return false;
                 }
             }
@@ -91,9 +89,10 @@ bool check(int grid[9][9]) {
 }
 
 /******************************************************************************/
-/*                                   solve                                    */
+/*                             get valid numbers                              */
 /******************************************************************************/
 
+/* get the list of the valid numbers for a cell in the given grid */
 std::vector<int> getValids(int grid[9][9], int line, int column) {
     std::vector<int> valids;
     bool found[9] = {0};
@@ -106,11 +105,9 @@ std::vector<int> getValids(int grid[9][9], int line, int column) {
     // lines
     for (int i = 0; i < 9; ++i) {
         if (grid[line][i] > 0) {
-            /* std::cout << "found: " << grid[line][i] << std::endl; */
             found[grid[line][i] - 1] = true;
         }
         if (grid[i][column] > 0) {
-            /* std::cout << "found: " << grid[i][column] << std::endl; */
             found[grid[i][column] - 1] = true;
         }
     }
@@ -119,7 +116,6 @@ std::vector<int> getValids(int grid[9][9], int line, int column) {
     for (int i = sgc.first; i < (sgc.first + 3); ++i) {
         for (int j = sgc.second; j < (sgc.second + 3); ++j) {
             if (grid[i][j] > 0) {
-                /* std::cout << "found: " << grid[i][j] << std::endl; */
                 found[grid[i][j] - 1] = true;
             }
         }
@@ -134,6 +130,9 @@ std::vector<int> getValids(int grid[9][9], int line, int column) {
     return valids;
 }
 
+/* get the list of valid numbers for all the cells in the given grid. The
+ * returned list is sorted on the number of possibilities (we treat cells with
+ * less possibilities first) */
 std::vector<ValidList> getValidsLists(int grid[9][9]) {
     std::vector<ValidList> valids;
 
@@ -163,16 +162,9 @@ std::vector<ValidList> getValidsLists(int grid[9][9]) {
     return valids;
 }
 
-void printValidList(const std::vector<ValidList>& valids) {
-    for (auto elt : valids) {
-        std::cout << "(" << elt.line << ", " << elt.column << ") ";
-
-        for (auto v : elt.valids) {
-            std::cout << v << " ";
-        }
-        std::cout << std::endl;
-    }
-}
+/******************************************************************************/
+/*                                   solve                                    */
+/******************************************************************************/
 
 void resolve(int grid[9][9]) {
     resolveImpl(grid);
@@ -198,6 +190,10 @@ void resolveImpl(int grid[9][9]) {
         resolveImpl(newGrid);
     }
 }
+
+/******************************************************************************/
+/*                                    copy                                    */
+/******************************************************************************/
 
 void copyGrids(int dest[9][9], int src[9][9]) {
     for (int i = 0; i < 9; ++i) {
