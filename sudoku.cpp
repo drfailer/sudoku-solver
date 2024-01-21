@@ -8,7 +8,7 @@
 /*                                load & save                                 */
 /******************************************************************************/
 
-void Sudoku::loadFromFile(const std::string& fileName) {
+void loadFromFile(int grid[9][9], const std::string& fileName) {
     std::ifstream file(fileName);
 
     if (!file.is_open()) {
@@ -18,18 +18,18 @@ void Sudoku::loadFromFile(const std::string& fileName) {
 
     for (int i = 0; i < 9; ++i) {
         for (int j = 0; j < 9; ++j) {
-            file >> table[i][j];
+            file >> grid[i][j];
         }
     }
 }
 
-void Sudoku::saveToFile(const std::string& fileName) const {
+void saveToFile(int grid[9][9], const std::string& fileName) {
     std::ofstream file(fileName);
 
     for (int i = 0; i < 9; ++i) {
-        file << table[i][0];
+        file << grid[i][0];
         for (int j = 1; j < 9; ++j) {
-            file << " " << table[i][j];
+            file << " " << grid[i][j];
         }
         file << std::endl;
     }
@@ -39,10 +39,10 @@ void Sudoku::saveToFile(const std::string& fileName) const {
 /*                                   print                                    */
 /******************************************************************************/
 
-void Sudoku::print() const {
+void print(int grid[9][9]) {
     for (int i = 0; i < 9; ++i) {
         for (int j =0; j < 9; ++j) {
-            std::cout << table[i][j] << " ";
+            std::cout << grid[i][j] << " ";
         }
         std::cout << std::endl;
     }
@@ -52,13 +52,13 @@ void Sudoku::print() const {
 /*                                   check                                    */
 /******************************************************************************/
 
-bool Sudoku::check() const {
+bool check(int grid[9][9]) {
     for (int i = 0; i < 9; ++i) {
         // check lines and columns
         for (int j = 0; j < 9; ++j) {
             for (int k = 0; k < 9; ++k) {
-                bool lineError = (k != j && table[i][j] == table[i][k]);
-                bool columnError = (k != i && table[i][j] == table[k][j]);
+                bool lineError = (k != j && grid[i][j] == grid[i][k]);
+                bool columnError = (k != i && grid[i][j] == grid[k][j]);
 
                 if (lineError && columnError) {
                     if (lineError) {
@@ -78,10 +78,10 @@ bool Sudoku::check() const {
 
         for (int j = sgc.first; j < (sgc.first + 3); ++j) {
             for (int k = sgc.second; k < (sgc.second + 3); ++k) {
-                if (founded[table[j][k] - 1]) {
+                if (founded[grid[j][k] - 1]) {
                     return false;
                 } else {
-                    founded[table[j][k] - 1] = true;
+                    founded[grid[j][k] - 1] = true;
                 }
             }
         }
@@ -94,7 +94,7 @@ bool Sudoku::check() const {
 /*                                   solve                                    */
 /******************************************************************************/
 
-std::vector<int> Sudoku::getValids(int grid[9][9], int line, int column) const {
+std::vector<int> getValids(int grid[9][9], int line, int column) {
     std::vector<int> valids;
     bool found[9] = {0};
     std::pair<int, int> sgc = subgridCoord(line, column);
@@ -134,7 +134,7 @@ std::vector<int> Sudoku::getValids(int grid[9][9], int line, int column) const {
     return valids;
 }
 
-std::vector<Sudoku::ValidList> Sudoku::getValidsLists(int grid[9][9]) {
+std::vector<ValidList> getValidsLists(int grid[9][9]) {
     std::vector<ValidList> valids;
 
     // get all valids
@@ -163,7 +163,7 @@ std::vector<Sudoku::ValidList> Sudoku::getValidsLists(int grid[9][9]) {
     return valids;
 }
 
-void printValidList(const std::vector<Sudoku::ValidList>& valids) {
+void printValidList(const std::vector<ValidList>& valids) {
     for (auto elt : valids) {
         std::cout << "(" << elt.line << ", " << elt.column << ") ";
 
@@ -174,22 +174,17 @@ void printValidList(const std::vector<Sudoku::ValidList>& valids) {
     }
 }
 
-void Sudoku::resolve() {
-    std::vector<ValidList> valids = getValidsLists(table);
-    // il faut copier la table
-    int grid[9][9];
-    copyGrids(grid, table);
+void resolve(int grid[9][9]) {
     resolveImpl(grid);
 }
 
-void Sudoku::resolveImpl(int grid[9][9]) {
+void resolveImpl(int grid[9][9]) {
     std::vector<ValidList> valids = getValidsLists(grid);
 
     if (valids.size() == 0) {
-        copyGrids(table, grid);
-        if (check()) {
+        if (check(grid)) {
             std::cout << "Solution:" << std::endl;
-            print();
+            print(grid);
         }
         return;
     }
@@ -204,7 +199,7 @@ void Sudoku::resolveImpl(int grid[9][9]) {
     }
 }
 
-void Sudoku::copyGrids(int dest[9][9], int src[9][9]) {
+void copyGrids(int dest[9][9], int src[9][9]) {
     for (int i = 0; i < 9; ++i) {
         memcpy(dest[i], src[i], 9 * sizeof(int));
     }

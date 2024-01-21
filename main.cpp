@@ -3,10 +3,10 @@
 
 int main(int, char**)
 {
-    Sudoku sudoku;
+    int sudoku[9][9];
 
-    sudoku.loadFromFile("./tests/test2.txt");
-    sudoku.resolve();
+    loadFromFile(sudoku, "./tests/test2.txt");
+    resolve(sudoku);
 
     /* sudoku.loadFromFile("./test-solution"); */
     /* sudoku.print(); */

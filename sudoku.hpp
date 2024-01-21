@@ -4,46 +4,38 @@
 #include <utility>
 #include <vector>
 
-class Sudoku {
-public:
-    Sudoku() = default;
 
-    /* accessors **************************************************************/
-    int& at(int i, int j) { return table[i][j]; }
+/* accessors **************************************************************/
 
-    // subgrids coordinates
-    std::pair<int, int> subgridCoord(int subgridIdx) const {
-        return std::make_pair(3 * (subgridIdx / 3), 3 * (subgridIdx % 3));
-    }
-    std::pair<int, int> subgridCoord(int i, int j) const {
-        return std::make_pair(3 * (i / 3), 3 * (j / 3));
-    }
+inline std::pair<int, int> subgridCoord(int subgridIdx)  {
+    return std::make_pair(3 * (subgridIdx / 3), 3 * (subgridIdx % 3));
+}
 
-    /* print ******************************************************************/
-    void print() const;
+inline std::pair<int, int> subgridCoord(int i, int j)  {
+    return std::make_pair(3 * (i / 3), 3 * (j / 3));
+}
 
-    /* load & save ************************************************************/
-    void loadFromFile(const std::string& fileName);
-    void saveToFile(const std::string& fileName) const;
+/* print ******************************************************************/
+void print(int grid[9][9]);
 
-    /* check ******************************************************************/
-    bool check() const;
+/* load & save ************************************************************/
+void loadFromFile(int grid[9][9], const std::string& fileName);
+void saveToFile(int grid[9][9], const std::string& fileName);
 
-    /* resolve ****************************************************************/
-    void copyGrids(int dest[9][9], int src[9][9]);
-    std::vector<int> getValids(int grid[9][9], int line, int culumn) const;
-    void resolve();
+/* check ******************************************************************/
+bool check(int grid[9][9]);
 
-    struct ValidList {
-        int line;
-        int column;
-        std::vector<int> valids;
-    };
-    std::vector<ValidList> getValidsLists(int grid[9][9]);
-    void resolveImpl(int grid[9][9]);
+/* resolve ****************************************************************/
+void copyGrids(int dest[9][9], int src[9][9]);
+std::vector<int> getValids(int grid[9][9], int line, int culumn);
+void resolve(int grid[9][9]);
 
-private:
-    int table[9][9];
+struct ValidList {
+    int line;
+    int column;
+    std::vector<int> valids;
 };
+std::vector<ValidList> getValidsLists(int grid[9][9]);
+void resolveImpl(int grid[9][9]);
 
 #endif
