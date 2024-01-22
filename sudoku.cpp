@@ -166,11 +166,11 @@ std::vector<ValidList> getValidsLists(int grid[9][9]) {
 /*                                   solve                                    */
 /******************************************************************************/
 
-void resolve(int grid[9][9]) {
-    resolveImpl(grid);
+void solve(int grid[9][9]) {
+    solveImpl(grid);
 }
 
-void resolveImpl(int grid[9][9]) {
+void solveImpl(int grid[9][9]) {
     std::vector<ValidList> valids = getValidsLists(grid);
 
     if (valids.size() == 0) {
@@ -187,7 +187,7 @@ void resolveImpl(int grid[9][9]) {
 
     for (int validNumber : lst.valids) {
         newGrid[lst.line][lst.column] = validNumber;
-        resolveImpl(newGrid);
+        solveImpl(newGrid);
     }
 }
 
