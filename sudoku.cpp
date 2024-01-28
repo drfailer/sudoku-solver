@@ -2,14 +2,19 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <algorithm>
+#include <iterator>
 
 /******************************************************************************/
 /*                                load & save                                 */
 /******************************************************************************/
 
-/* load a grid from a file */
-void loadFromFile(int grid[9][9], const std::string& fileName) {
+/**
+ * @brief  Load a grid from a file
+ *
+ * @param  grid      2D array representing the grid.
+ * @param  fileName  Name of the file to load.
+ */
+void loadFromFile(int grid[9][9], const std::string &fileName) {
     std::ifstream file(fileName);
 
     if (!file.is_open()) {
@@ -24,9 +29,19 @@ void loadFromFile(int grid[9][9], const std::string& fileName) {
     }
 }
 
-/* save a grid to a file */
-void saveToFile(int grid[9][9], const std::string& fileName) {
+/**
+ * @brief  Save a grid to a file
+ *
+ * @param  grid      2D array representing the grid.
+ * @param  fileName  Name of the file.
+ */
+void saveToFile(int grid[9][9], const std::string &fileName) {
     std::ofstream file(fileName);
+
+    if (!file.is_open()) {
+        std::cerr << "Error: can't open file." << std::endl;
+        return;
+    }
 
     for (int i = 0; i < 9; ++i) {
         file << grid[i][0];
@@ -41,10 +56,13 @@ void saveToFile(int grid[9][9], const std::string& fileName) {
 /*                                   print                                    */
 /******************************************************************************/
 
-/* print a grid on stdout */
+/**
+ * @brief  Display a grid on stdout.
+ * @param  grid  Sudoku grid to display.
+ */
 void print(int grid[9][9]) {
     for (int i = 0; i < 9; ++i) {
-        for (int j =0; j < 9; ++j) {
+        for (int j = 0; j < 9; ++j) {
             std::cout << grid[i][j] << " ";
         }
         std::cout << std::endl;
@@ -55,7 +73,11 @@ void print(int grid[9][9]) {
 /*                                   check                                    */
 /******************************************************************************/
 
-/* Check if a grid is valid */
+/**
+ * @brief  Check if a grid is valid.
+ * @param  grid  Sudoku grid to check.
+ * @return  true if the grid is correct, false otherwise.
+ */
 bool check(int grid[9][9]) {
     for (int i = 0; i < 9; ++i) {
         // check lines and columns
@@ -92,7 +114,14 @@ bool check(int grid[9][9]) {
 /*                             get valid numbers                              */
 /******************************************************************************/
 
-/* get the list of the valid numbers for a cell in the given grid */
+/**
+ * @brief  Compute the list of the valid numbers for a cell.
+ *
+ * @param  grid  Sudoku grid.
+ * @param  line  Line of the cell.
+ * @param  column  Column of the cell.
+ * @return  Vector containing the numbers.
+ */
 std::vector<int> getValids(int grid[9][9], int line, int column) {
     std::vector<int> valids;
     bool found[9] = {0};
@@ -102,7 +131,7 @@ std::vector<int> getValids(int grid[9][9], int line, int column) {
         return valids;
     }
 
-    // lines
+    // lines & columns
     for (int i = 0; i < 9; ++i) {
         if (grid[line][i] > 0) {
             found[grid[line][i] - 1] = true;
@@ -130,11 +159,16 @@ std::vector<int> getValids(int grid[9][9], int line, int column) {
     return valids;
 }
 
-/* get the list of valid numbers for all the cells in the given grid. The
- * returned list is sorted on the number of possibilities (we treat cells with
- * less possibilities first) */
-std::vector<ValidList> getValidsLists(int grid[9][9]) {
-    std::vector<ValidList> valids;
+/**
+ * @brief  Computes the list of valid numbers for all the cells in the given
+ *         grid.
+ *
+ * @param  grid  Sudoku grid.
+ * @return  Vector containing all the valid lists with the following format:
+ *          { line: int, column: int, valids: vector<int> }
+ */
+std::set<ValidList, CompSize> getValidsLists(int grid[9][9]) {
+    std::set<ValidList, CompSize> valids;
 
     // get all valids
     for (int i = 0; i < 9; ++i) {
@@ -143,36 +177,80 @@ std::vector<ValidList> getValidsLists(int grid[9][9]) {
                 std::vector<int> validsHere = getValids(grid, i, j);
 
                 if (validsHere.size()) {
-                    valids.push_back({
-                            .line = i,
-                            .column = j,
-                            .valids = validsHere
-                            });
+                    valids.insert(
+                        {.line = i, .column = j, .valids = validsHere});
                 }
             }
         }
     }
 
-    // sort valids to get the elements with less possiblities
-    std::sort(valids.begin(), valids.end(),
-            [](const ValidList& lhs, const ValidList rhs) {
-                return lhs.valids.size() > rhs.valids.size();
-            });
-
     return valids;
+}
+
+/**
+ * @brief  Update the list of valid numbers. This function has to be used when a
+ *         new number is placed on the grid.
+ *
+ * @param  valids  Old list of valid numbers
+ * @param  line  Line where the new number has be placed.
+ * @param  column  Column where the new number has be placed.
+ * @param  number  New number placed.
+ *
+ * @return  The updated list of valid numbers where `number` has been removed in
+ *          all the valid list on the same line / column / subgrid as the cell
+ *          (line, column).
+ */
+std::set<ValidList, CompSize>
+updateValids(const std::set<ValidList, CompSize> &valids, int line, int column,
+             int number) {
+    std::set<ValidList, CompSize> output;
+    std::pair<int, int> sgc = subgridCoord(line, column);
+
+    for (const ValidList &lst : valids) {
+        bool sameLine = lst.line == line;
+        bool sameColumn = lst.column == column;
+        bool sameSubGrid =
+            (sgc.first <= lst.line && lst.line < (sgc.first + 3)) &&
+            (sgc.second <= lst.column && lst.column < (sgc.second + 3));
+        ValidList updated = {lst.line, lst.column, std::vector<int>()};
+
+        if (sameLine || sameColumn || sameSubGrid) {
+            std::copy_if(lst.valids.begin(), lst.valids.end(),
+                         std::back_inserter(updated.valids),
+                         DifferentThan(number));
+        } else {
+            std::copy(lst.valids.begin(), lst.valids.end(),
+                      std::back_inserter(updated.valids));
+        }
+        if (updated.valids.size()) {
+            output.insert(updated);
+        }
+    }
+    return output;
 }
 
 /******************************************************************************/
 /*                                   solve                                    */
 /******************************************************************************/
 
+/**
+ * @brief  Solve the sudoku.
+ * @param  grid  Sudoku grid to solve.
+ */
 void solve(int grid[9][9]) {
-    solveImpl(grid);
+    std::set<ValidList, CompSize> valids = getValidsLists(grid);
+    solveImpl(grid, std::move(valids));
 }
 
-void solveImpl(int grid[9][9]) {
-    std::vector<ValidList> valids = getValidsLists(grid);
-
+/**
+ * @brief  Implementation of the solving algorithm.
+ *
+ * @param  grid    Sudoku grid to solve.
+ * @param  valids  List of valid numbers.
+ * @return  The solutions are printed when found. We do not return anything when
+ *          a solution is found as we want to find all the possible solutions.
+ */
+void solveImpl(int grid[9][9], std::set<ValidList, CompSize> &&valids) {
     if (valids.size() == 0) {
         if (check(grid)) {
             std::cout << "Solution:" << std::endl;
@@ -181,13 +259,15 @@ void solveImpl(int grid[9][9]) {
         return;
     }
 
-    ValidList lst = valids.back();
+    ValidList lst = *valids.begin();
     int newGrid[9][9];
     copyGrids(newGrid, grid);
+    valids.erase(valids.begin());
 
     for (int validNumber : lst.valids) {
         newGrid[lst.line][lst.column] = validNumber;
-        solveImpl(newGrid);
+        solveImpl(newGrid,
+                  updateValids(valids, lst.line, lst.column, validNumber));
     }
 }
 
@@ -195,6 +275,12 @@ void solveImpl(int grid[9][9]) {
 /*                                    copy                                    */
 /******************************************************************************/
 
+/**
+ * @brief  Copy the sudoku grid `src` into `dest`.
+ *
+ * @param  dest  Destination grid.
+ * @param  src   Source grid.
+ */
 void copyGrids(int dest[9][9], int src[9][9]) {
     for (int i = 0; i < 9; ++i) {
         memcpy(dest[i], src[i], 9 * sizeof(int));

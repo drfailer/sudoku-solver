@@ -2,17 +2,35 @@
 #define SUDOKU_HPP
 #include <string>
 #include <vector>
+#include <set>
+#include <algorithm>
 
 /******************************************************************************/
 /*                                  structs                                   */
 /******************************************************************************/
 
-// TODO: create a struct with a list of ValidList* and a grid of ValidList (this
-//       will facilitate the update for optimization)
 struct ValidList {
     int line;
     int column;
     std::vector<int> valids;
+};
+
+/******************************************************************************/
+/*                                  functors                                  */
+/******************************************************************************/
+
+struct CompSize {
+    bool operator()(const ValidList& lhs, const ValidList& rhs) const {
+        return lhs.valids.size() <= rhs.valids.size();
+    }
+};
+
+struct DifferentThan {
+    DifferentThan(int elt): elt(elt) {}
+    bool operator()(int n) const {
+        return elt != n;
+    }
+    int elt;
 };
 
 /******************************************************************************/
@@ -30,8 +48,9 @@ void solve(int grid[9][9]);
 /******************************************************************************/
 
 std::vector<int> getValids(int grid[9][9], int line, int culumn);
-std::vector<ValidList> getValidsLists(int grid[9][9]);
-void solveImpl(int grid[9][9]);
+std::set<ValidList, CompSize> getValidsLists(int grid[9][9]);
+void solveImpl(int grid[9][9], std::set<ValidList, CompSize>&& valids);
+void copyGrids(int dest[9][9], int src[9][9]);
 
 inline std::pair<int, int> subgridCoord(int subgridIdx)  {
     return std::make_pair(3 * (subgridIdx / 3), 3 * (subgridIdx % 3));
@@ -40,7 +59,5 @@ inline std::pair<int, int> subgridCoord(int subgridIdx)  {
 inline std::pair<int, int> subgridCoord(int i, int j)  {
     return std::make_pair(3 * (i / 3), 3 * (j / 3));
 }
-
-void copyGrids(int dest[9][9], int src[9][9]);
 
 #endif
