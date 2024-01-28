@@ -38,6 +38,11 @@ void loadFromFile(int grid[9][9], const std::string &fileName) {
 void saveToFile(int grid[9][9], const std::string &fileName) {
     std::ofstream file(fileName);
 
+    if (!file.is_open()) {
+        std::cerr << "Error: can't open file." << std::endl;
+        return;
+    }
+
     for (int i = 0; i < 9; ++i) {
         file << grid[i][0];
         for (int j = 1; j < 9; ++j) {
@@ -212,7 +217,7 @@ updateValids(const std::set<ValidList, CompSize> &valids, int line, int column,
         if (sameLine || sameColumn || sameSubGrid) {
             std::copy_if(lst.valids.begin(), lst.valids.end(),
                          std::back_inserter(updated.valids),
-                         [number](int n) { return n != number; });
+                         DifferentThan(number));
         } else {
             std::copy(lst.valids.begin(), lst.valids.end(),
                       std::back_inserter(updated.valids));
@@ -237,6 +242,14 @@ void solve(int grid[9][9]) {
     solveImpl(grid, std::move(valids));
 }
 
+/**
+ * @brief  Implementation of the solving algorithm.
+ *
+ * @param  grid    Sudoku grid to solve.
+ * @param  valids  List of valid numbers.
+ * @return  The solutions are printed when found. We do not return anything when
+ *          a solution is found as we want to find all the possible solutions.
+ */
 void solveImpl(int grid[9][9], std::set<ValidList, CompSize> &&valids) {
     if (valids.size() == 0) {
         if (check(grid)) {

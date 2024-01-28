@@ -25,6 +25,14 @@ struct CompSize {
     }
 };
 
+struct DifferentThan {
+    DifferentThan(int elt): elt(elt) {}
+    bool operator()(int n) const {
+        return elt != n;
+    }
+    int elt;
+};
+
 /******************************************************************************/
 /*                                 functions                                  */
 /******************************************************************************/
