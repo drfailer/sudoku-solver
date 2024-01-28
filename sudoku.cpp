@@ -9,7 +9,12 @@
 /*                                load & save                                 */
 /******************************************************************************/
 
-/* Load a grid from a file */
+/**
+ * @brief  Load a grid from a file
+ *
+ * @param  grid      2D array representing the grid.
+ * @param  fileName  Name of the file to load.
+ */
 void loadFromFile(int grid[9][9], const std::string& fileName) {
     std::ifstream file(fileName);
 
@@ -25,7 +30,12 @@ void loadFromFile(int grid[9][9], const std::string& fileName) {
     }
 }
 
-/* Save a grid to a file */
+/**
+ * @brief  Save a grid to a file
+ *
+ * @param  grid      2D array representing the grid.
+ * @param  fileName  Name of the file.
+ */
 void saveToFile(int grid[9][9], const std::string& fileName) {
     std::ofstream file(fileName);
 
@@ -42,7 +52,10 @@ void saveToFile(int grid[9][9], const std::string& fileName) {
 /*                                   print                                    */
 /******************************************************************************/
 
-/* Print a grid on stdout */
+/**
+ * @brief  Display a grid on stdout.
+ * @param  grid  Sudoku grid to display.
+ */
 void print(int grid[9][9]) {
     for (int i = 0; i < 9; ++i) {
         for (int j =0; j < 9; ++j) {
@@ -56,7 +69,11 @@ void print(int grid[9][9]) {
 /*                                   check                                    */
 /******************************************************************************/
 
-/* Check if a grid is valid */
+/**
+ * @brief  Check if a grid is valid.
+ * @param  grid  Sudoku grid to check.
+ * @return  true if the grid is correct, false otherwise.
+ */
 bool check(int grid[9][9]) {
     for (int i = 0; i < 9; ++i) {
         // check lines and columns
@@ -93,7 +110,14 @@ bool check(int grid[9][9]) {
 /*                             get valid numbers                              */
 /******************************************************************************/
 
-/* Get the list of the valid numbers for a cell in the given grid */
+/**
+ * @brief  Compute the list of the valid numbers for a cell.
+ *
+ * @param  grid  Sudoku grid.
+ * @param  line  Line of the cell.
+ * @param  column  Column of the cell.
+ * @return  Vector containing the numbers.
+ */
 std::vector<int> getValids(int grid[9][9], int line, int column) {
     std::vector<int> valids;
     bool found[9] = {0};
@@ -103,7 +127,7 @@ std::vector<int> getValids(int grid[9][9], int line, int column) {
         return valids;
     }
 
-    // lines
+    // lines & columns
     for (int i = 0; i < 9; ++i) {
         if (grid[line][i] > 0) {
             found[grid[line][i] - 1] = true;
@@ -131,9 +155,14 @@ std::vector<int> getValids(int grid[9][9], int line, int column) {
     return valids;
 }
 
-/* get the list of valid numbers for all the cells in the given grid. The
- * returned list is sorted on the number of possibilities (we treat cells with
- * less possibilities first) */
+/**
+ * @brief  Computes the list of valid numbers for all the cells in the given
+ *         grid.
+ *
+ * @param  grid  Sudoku grid.
+ * @return  Vector containing all the valid lists with the following format:
+ *          { line: int, column: int, valids: vector<int> }
+ */
 std::vector<ValidList> getValidsLists(int grid[9][9]) {
     std::vector<ValidList> valids;
 
@@ -157,18 +186,19 @@ std::vector<ValidList> getValidsLists(int grid[9][9]) {
     return valids;
 }
 
-/******************************************************************************/
-/*                                   solve                                    */
-/******************************************************************************/
-
-void solve(int grid[9][9]) {
-    std::vector<ValidList> valids = getValidsLists(grid);
-
-    // sort valids to get the elements with less possiblities
-    sortOnSize(valids);
-    solveImpl(grid, std::move(valids));
-}
-
+/**
+ * @brief  Update the list of valid numbers. This function has to be used when a
+ *         new number is placed on the grid.
+ *
+ * @param  valids  Old list of valid numbers
+ * @param  line  Line where the new number has be placed.
+ * @param  column  Column where the new number has be placed.
+ * @param  number  New number placed.
+ *
+ * @return  The updated list of valid numbers where `number` has been removed in
+ *          all the valid list on the same line / column / subgrid as the cell
+ *          (line, column).
+ */
 std::vector<ValidList> updateValids(const std::vector<ValidList>& valids,
         int line, int column, int number) {
     std::vector<ValidList> output;
@@ -200,6 +230,22 @@ std::vector<ValidList> updateValids(const std::vector<ValidList>& valids,
     return output;
 }
 
+/******************************************************************************/
+/*                                   solve                                    */
+/******************************************************************************/
+
+/**
+ * @brief  Solve the sudoku.
+ * @param  grid  Sudoku grid to solve.
+ */
+void solve(int grid[9][9]) {
+    std::vector<ValidList> valids = getValidsLists(grid);
+
+    // sort valids to treat the elements with less possiblities first
+    sortOnSize(valids);
+    solveImpl(grid, std::move(valids));
+}
+
 void solveImpl(int grid[9][9], std::vector<ValidList>&& valids) {
     if (valids.size() == 0) {
         if (check(grid)) {
@@ -224,6 +270,12 @@ void solveImpl(int grid[9][9], std::vector<ValidList>&& valids) {
 /*                                    copy                                    */
 /******************************************************************************/
 
+/**
+ * @brief  Copy the sudoku grid `src` into `dest`.
+ *
+ * @param  dest  Destination grid.
+ * @param  src   Source grid.
+ */
 void copyGrids(int dest[9][9], int src[9][9]) {
     for (int i = 0; i < 9; ++i) {
         memcpy(dest[i], src[i], 9 * sizeof(int));
