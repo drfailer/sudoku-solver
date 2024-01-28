@@ -2,7 +2,6 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <algorithm>
 #include <iterator>
 #include <iostream>
 
@@ -166,10 +165,7 @@ void solve(int grid[9][9]) {
     std::vector<ValidList> valids = getValidsLists(grid);
 
     // sort valids to get the elements with less possiblities
-    std::sort(valids.begin(), valids.end(),
-            [](const ValidList& lhs, const ValidList rhs) {
-                return lhs.valids.size() > rhs.valids.size();
-            });
+    sortOnSize(valids);
     solveImpl(grid, std::move(valids));
 }
 
@@ -193,10 +189,7 @@ std::vector<ValidList> updateValids(const std::vector<ValidList>& valids,
                 [number](const ValidList& lst) { return lst.valids.size() == 0; }),
             output.end());
     // we must sort here
-    std::sort(output.begin(), output.end(),
-            [](const ValidList& lhs, const ValidList rhs) {
-                return lhs.valids.size() > rhs.valids.size();
-            });
+    sortOnSize(output);
     return output;
 }
 
