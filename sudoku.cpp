@@ -9,7 +9,7 @@
 /*                                load & save                                 */
 /******************************************************************************/
 
-/* load a grid from a file */
+/* Load a grid from a file */
 void loadFromFile(int grid[9][9], const std::string& fileName) {
     std::ifstream file(fileName);
 
@@ -25,7 +25,7 @@ void loadFromFile(int grid[9][9], const std::string& fileName) {
     }
 }
 
-/* save a grid to a file */
+/* Save a grid to a file */
 void saveToFile(int grid[9][9], const std::string& fileName) {
     std::ofstream file(fileName);
 
@@ -42,7 +42,7 @@ void saveToFile(int grid[9][9], const std::string& fileName) {
 /*                                   print                                    */
 /******************************************************************************/
 
-/* print a grid on stdout */
+/* Print a grid on stdout */
 void print(int grid[9][9]) {
     for (int i = 0; i < 9; ++i) {
         for (int j =0; j < 9; ++j) {
@@ -93,7 +93,7 @@ bool check(int grid[9][9]) {
 /*                             get valid numbers                              */
 /******************************************************************************/
 
-/* get the list of the valid numbers for a cell in the given grid */
+/* Get the list of the valid numbers for a cell in the given grid */
 std::vector<int> getValids(int grid[9][9], int line, int column) {
     std::vector<int> valids;
     bool found[9] = {0};
@@ -171,18 +171,25 @@ void solve(int grid[9][9]) {
 
 std::vector<ValidList> updateValids(const std::vector<ValidList>& valids,
         int line, int column, int number) {
-    std::vector<ValidList> output = valids;
+    std::vector<ValidList> output;
     std::pair<int, int> sgc = subgridCoord(line, column);
 
-    for (ValidList& lst : output) {
+    for (const ValidList& lst : valids) {
         bool sameLine = lst.line == line;
         bool sameColumn = lst.column == column;
         bool sameSubGrid = (sgc.first <= lst.line && lst.line < (sgc.first + 3))
                         && (sgc.second <= lst.column && lst.column < (sgc.second + 3));
+        ValidList updated = { lst.line, lst.column, std::vector<int>() };
 
         if (sameLine || sameColumn || sameSubGrid) {
-            lst.valids.erase(std::remove_if(lst.valids.begin(), lst.valids.end(),
-                        [number](int n) { return n == number; }), lst.valids.end());
+            std::copy_if(lst.valids.begin(), lst.valids.end(),
+                    std::back_inserter(updated.valids), [number](int n) { return n != number; });
+        } else {
+            std::copy(lst.valids.begin(), lst.valids.end(),
+                    std::back_inserter(updated.valids));
+        }
+        if (updated.valids.size()) {
+            output.push_back(updated);
         }
     }
     output.erase(std::remove_if(output.begin(), output.end(),
