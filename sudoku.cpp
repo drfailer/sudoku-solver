@@ -3,6 +3,8 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <iterator>
+#include <iostream>
 
 /******************************************************************************/
 /*                                load & save                                 */
@@ -153,12 +155,6 @@ std::vector<ValidList> getValidsLists(int grid[9][9]) {
         }
     }
 
-    // sort valids to get the elements with less possiblities
-    std::sort(valids.begin(), valids.end(),
-            [](const ValidList& lhs, const ValidList rhs) {
-                return lhs.valids.size() > rhs.valids.size();
-            });
-
     return valids;
 }
 
@@ -167,12 +163,50 @@ std::vector<ValidList> getValidsLists(int grid[9][9]) {
 /******************************************************************************/
 
 void solve(int grid[9][9]) {
-    solveImpl(grid);
-}
-
-void solveImpl(int grid[9][9]) {
     std::vector<ValidList> valids = getValidsLists(grid);
 
+    // sort valids to get the elements with less possiblities
+    std::sort(valids.begin(), valids.end(),
+            [](const ValidList& lhs, const ValidList rhs) {
+                return lhs.valids.size() > rhs.valids.size();
+            });
+    solveImpl(grid, std::move(valids));
+}
+
+std::vector<ValidList> updateValids(const std::vector<ValidList>& valids,
+        int line, int column, int number) {
+    std::vector<ValidList> output;
+    std::pair<int, int> sgc = subgridCoord(line, column);
+
+    for (const ValidList& lst : valids) {
+        bool sameLine = lst.line == line;
+        bool sameColumn = lst.column == column;
+        bool sameSubGrid = (sgc.first <= lst.line && lst.line < (sgc.first + 3))
+                        && (sgc.second <= lst.column && lst.column < (sgc.second + 3));
+        ValidList updatedList = {
+            .line = lst.line,
+            .column = lst.column,
+            .valids = std::vector<int>()
+        };
+
+        if (sameLine || sameColumn || sameSubGrid) {
+            std::copy_if(lst.valids.begin(), lst.valids.end(),
+                    std::back_inserter(updatedList.valids), [number](int nb) {
+                        return nb != number;
+                    });
+        } else {
+            std::copy(lst.valids.begin(), lst.valids.end(),
+                    std::back_inserter(updatedList.valids));
+        }
+
+        if (updatedList.valids.size()) {
+            output.push_back(updatedList);
+        }
+    }
+    return output;
+}
+
+void solveImpl(int grid[9][9], std::vector<ValidList>&& valids) {
     if (valids.size() == 0) {
         if (check(grid)) {
             std::cout << "Solution:" << std::endl;
@@ -184,10 +218,11 @@ void solveImpl(int grid[9][9]) {
     ValidList lst = valids.back();
     int newGrid[9][9];
     copyGrids(newGrid, grid);
+    valids.pop_back();
 
     for (int validNumber : lst.valids) {
         newGrid[lst.line][lst.column] = validNumber;
-        solveImpl(newGrid);
+        solveImpl(newGrid, updateValids(valids, lst.line, lst.column, validNumber));
     }
 }
 

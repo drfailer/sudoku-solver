@@ -31,7 +31,7 @@ void solve(int grid[9][9]);
 
 std::vector<int> getValids(int grid[9][9], int line, int culumn);
 std::vector<ValidList> getValidsLists(int grid[9][9]);
-void solveImpl(int grid[9][9]);
+void solveImpl(int grid[9][9], std::vector<ValidList>&& valids);
 
 inline std::pair<int, int> subgridCoord(int subgridIdx)  {
     return std::make_pair(3 * (subgridIdx / 3), 3 * (subgridIdx % 3));
