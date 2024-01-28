@@ -175,34 +175,28 @@ void solve(int grid[9][9]) {
 
 std::vector<ValidList> updateValids(const std::vector<ValidList>& valids,
         int line, int column, int number) {
-    std::vector<ValidList> output;
+    std::vector<ValidList> output = valids;
     std::pair<int, int> sgc = subgridCoord(line, column);
 
-    for (const ValidList& lst : valids) {
+    for (ValidList& lst : output) {
         bool sameLine = lst.line == line;
         bool sameColumn = lst.column == column;
         bool sameSubGrid = (sgc.first <= lst.line && lst.line < (sgc.first + 3))
                         && (sgc.second <= lst.column && lst.column < (sgc.second + 3));
-        ValidList updatedList = {
-            .line = lst.line,
-            .column = lst.column,
-            .valids = std::vector<int>()
-        };
 
         if (sameLine || sameColumn || sameSubGrid) {
-            std::copy_if(lst.valids.begin(), lst.valids.end(),
-                    std::back_inserter(updatedList.valids), [number](int nb) {
-                        return nb != number;
-                    });
-        } else {
-            std::copy(lst.valids.begin(), lst.valids.end(),
-                    std::back_inserter(updatedList.valids));
-        }
-
-        if (updatedList.valids.size()) {
-            output.push_back(updatedList);
+            lst.valids.erase(std::remove_if(lst.valids.begin(), lst.valids.end(),
+                        [number](int n) { return n == number; }), lst.valids.end());
         }
     }
+    output.erase(std::remove_if(output.begin(), output.end(),
+                [number](const ValidList& lst) { return lst.valids.size() == 0; }),
+            output.end());
+    // we must sort here
+    std::sort(output.begin(), output.end(),
+            [](const ValidList& lhs, const ValidList rhs) {
+                return lhs.valids.size() > rhs.valids.size();
+            });
     return output;
 }
 
