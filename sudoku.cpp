@@ -3,7 +3,6 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
-#include <iostream>
 
 /******************************************************************************/
 /*                                load & save                                 */
@@ -15,7 +14,7 @@
  * @param  grid      2D array representing the grid.
  * @param  fileName  Name of the file to load.
  */
-void loadFromFile(int grid[9][9], const std::string& fileName) {
+void loadFromFile(int grid[9][9], const std::string &fileName) {
     std::ifstream file(fileName);
 
     if (!file.is_open()) {
@@ -36,7 +35,7 @@ void loadFromFile(int grid[9][9], const std::string& fileName) {
  * @param  grid      2D array representing the grid.
  * @param  fileName  Name of the file.
  */
-void saveToFile(int grid[9][9], const std::string& fileName) {
+void saveToFile(int grid[9][9], const std::string &fileName) {
     std::ofstream file(fileName);
 
     for (int i = 0; i < 9; ++i) {
@@ -58,7 +57,7 @@ void saveToFile(int grid[9][9], const std::string& fileName) {
  */
 void print(int grid[9][9]) {
     for (int i = 0; i < 9; ++i) {
-        for (int j =0; j < 9; ++j) {
+        for (int j = 0; j < 9; ++j) {
             std::cout << grid[i][j] << " ";
         }
         std::cout << std::endl;
@@ -163,8 +162,8 @@ std::vector<int> getValids(int grid[9][9], int line, int column) {
  * @return  Vector containing all the valid lists with the following format:
  *          { line: int, column: int, valids: vector<int> }
  */
-std::vector<ValidList> getValidsLists(int grid[9][9]) {
-    std::vector<ValidList> valids;
+std::set<ValidList, CompSize> getValidsLists(int grid[9][9]) {
+    std::set<ValidList, CompSize> valids;
 
     // get all valids
     for (int i = 0; i < 9; ++i) {
@@ -173,11 +172,8 @@ std::vector<ValidList> getValidsLists(int grid[9][9]) {
                 std::vector<int> validsHere = getValids(grid, i, j);
 
                 if (validsHere.size()) {
-                    valids.push_back({
-                            .line = i,
-                            .column = j,
-                            .valids = validsHere
-                            });
+                    valids.insert(
+                        {.line = i, .column = j, .valids = validsHere});
                 }
             }
         }
@@ -199,34 +195,32 @@ std::vector<ValidList> getValidsLists(int grid[9][9]) {
  *          all the valid list on the same line / column / subgrid as the cell
  *          (line, column).
  */
-std::vector<ValidList> updateValids(const std::vector<ValidList>& valids,
-        int line, int column, int number) {
-    std::vector<ValidList> output;
+std::set<ValidList, CompSize>
+updateValids(const std::set<ValidList, CompSize> &valids, int line, int column,
+             int number) {
+    std::set<ValidList, CompSize> output;
     std::pair<int, int> sgc = subgridCoord(line, column);
 
-    for (const ValidList& lst : valids) {
+    for (const ValidList &lst : valids) {
         bool sameLine = lst.line == line;
         bool sameColumn = lst.column == column;
-        bool sameSubGrid = (sgc.first <= lst.line && lst.line < (sgc.first + 3))
-                        && (sgc.second <= lst.column && lst.column < (sgc.second + 3));
-        ValidList updated = { lst.line, lst.column, std::vector<int>() };
+        bool sameSubGrid =
+            (sgc.first <= lst.line && lst.line < (sgc.first + 3)) &&
+            (sgc.second <= lst.column && lst.column < (sgc.second + 3));
+        ValidList updated = {lst.line, lst.column, std::vector<int>()};
 
         if (sameLine || sameColumn || sameSubGrid) {
             std::copy_if(lst.valids.begin(), lst.valids.end(),
-                    std::back_inserter(updated.valids), [number](int n) { return n != number; });
+                         std::back_inserter(updated.valids),
+                         [number](int n) { return n != number; });
         } else {
             std::copy(lst.valids.begin(), lst.valids.end(),
-                    std::back_inserter(updated.valids));
+                      std::back_inserter(updated.valids));
         }
         if (updated.valids.size()) {
-            output.push_back(updated);
+            output.insert(updated);
         }
     }
-    output.erase(std::remove_if(output.begin(), output.end(),
-                [number](const ValidList& lst) { return lst.valids.size() == 0; }),
-            output.end());
-    // we must sort here
-    sortOnSize(output);
     return output;
 }
 
@@ -239,14 +233,11 @@ std::vector<ValidList> updateValids(const std::vector<ValidList>& valids,
  * @param  grid  Sudoku grid to solve.
  */
 void solve(int grid[9][9]) {
-    std::vector<ValidList> valids = getValidsLists(grid);
-
-    // sort valids to treat the elements with less possiblities first
-    sortOnSize(valids);
+    std::set<ValidList, CompSize> valids = getValidsLists(grid);
     solveImpl(grid, std::move(valids));
 }
 
-void solveImpl(int grid[9][9], std::vector<ValidList>&& valids) {
+void solveImpl(int grid[9][9], std::set<ValidList, CompSize> &&valids) {
     if (valids.size() == 0) {
         if (check(grid)) {
             std::cout << "Solution:" << std::endl;
@@ -255,14 +246,15 @@ void solveImpl(int grid[9][9], std::vector<ValidList>&& valids) {
         return;
     }
 
-    ValidList lst = valids.back();
+    ValidList lst = *valids.begin();
     int newGrid[9][9];
     copyGrids(newGrid, grid);
-    valids.pop_back();
+    valids.erase(valids.begin());
 
     for (int validNumber : lst.valids) {
         newGrid[lst.line][lst.column] = validNumber;
-        solveImpl(newGrid, updateValids(valids, lst.line, lst.column, validNumber));
+        solveImpl(newGrid,
+                  updateValids(valids, lst.line, lst.column, validNumber));
     }
 }
 
