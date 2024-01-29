@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 #include <set>
-#include <algorithm>
 
 /******************************************************************************/
 /*                                  structs                                   */
@@ -50,7 +49,6 @@ void solve(int grid[9][9]);
 std::vector<int> getValids(int grid[9][9], int line, int culumn);
 std::set<ValidList, CompSize> getValidsLists(int grid[9][9]);
 void solveImpl(int grid[9][9], std::set<ValidList, CompSize>&& valids);
-void copyGrids(int dest[9][9], int src[9][9]);
 
 inline std::pair<int, int> subgridCoord(int subgridIdx)  {
     return std::make_pair(3 * (subgridIdx / 3), 3 * (subgridIdx % 3));

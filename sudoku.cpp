@@ -1,5 +1,5 @@
 #include "sudoku.hpp"
-#include <cstring>
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -260,29 +260,11 @@ void solveImpl(int grid[9][9], std::set<ValidList, CompSize> &&valids) {
     }
 
     ValidList lst = *valids.begin();
-    int newGrid[9][9];
-    copyGrids(newGrid, grid);
     valids.erase(valids.begin());
 
     for (int validNumber : lst.valids) {
-        newGrid[lst.line][lst.column] = validNumber;
-        solveImpl(newGrid,
-                  updateValids(valids, lst.line, lst.column, validNumber));
+        grid[lst.line][lst.column] = validNumber;
+        solveImpl(grid, updateValids(valids, lst.line, lst.column, validNumber));
     }
-}
-
-/******************************************************************************/
-/*                                    copy                                    */
-/******************************************************************************/
-
-/**
- * @brief  Copy the sudoku grid `src` into `dest`.
- *
- * @param  dest  Destination grid.
- * @param  src   Source grid.
- */
-void copyGrids(int dest[9][9], int src[9][9]) {
-    for (int i = 0; i < 9; ++i) {
-        memcpy(dest[i], src[i], 9 * sizeof(int));
-    }
+    grid[lst.line][lst.column] = 0;
 }
