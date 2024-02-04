@@ -86,7 +86,7 @@ bool check(int grid[9][9]) {
                 bool lineError = (k != j && grid[i][j] == grid[i][k]);
                 bool columnError = (k != i && grid[i][j] == grid[k][j]);
 
-                if (lineError && columnError) {
+                if (lineError || columnError) {
                     return false;
                 }
             }
